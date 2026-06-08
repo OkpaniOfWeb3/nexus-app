@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEXUS - InfoFi Exchange Terminal</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-main: #090d16;
+            --bg-card: #131926;
+            --bg-input: #1b2336;
+            --accent-cyan: #00f0ff;
+            --accent-purple: #9d4edd;
+            --text-neon: #39ff14;
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --accent-red: #ff3366;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .terminal-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--bg-card);
+            padding-bottom: 12px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-status {
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-neon);
+            background: rgba(57, 255, 20, 0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(57, 255, 20, 0.2);
+        }
+
+        .wallet-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .wallet-header {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .balance-display {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        .balance-display span {
+            color: var(--accent-cyan);
+        }
+
+        .key-phrase-box {
+            background: var(--bg-input);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 11px;
+            font-family: monospace;
+            border: 1px dashed var(--accent-purple);
+            color: #c084fc;
+            word-break: break-all;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin: 8px 0 4px 0;
+            text-align: left;
+        }
+
+        .market-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .contract-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contract-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .contract-title {
+            font-weight: 700;
+            font-size: 14px;
+            max-width: 75%;
+            line-height: 1.3;
+        }
+
+        .contract-tag {
+            font-size: 10px;
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent-cyan);
+            font-family: monospace;
+        }
+
+        .contract-metrics {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .metric-box {
+            text-align: left;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .action-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-trade {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+            font-weight: 800;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .btn-long { background: var(--accent-cyan); color: var(--bg-main); }
+        .btn-short { background: var(--accent-red); color: white; }
+        .btn-disabled { background: var(--bg-input); color: var(--text-muted); cursor: not-allowed; }
+
+        .portfolio-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            background: var(--bg-card);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal-container">
+    <header>
+        <div class="brand">NEXUS</div>
+        <div class="system-status" id="node-status">AI NODE: LIVE</div>
+    </header>
+
+    <!-- AUTOMATED SMART ACCOUNT GENERATION -->
+    <div class="wallet-card">
+        <div class="wallet-header">Embedded Multi-Chain Core</div>
+        <div class="balance-display">$<span id="user-funds">1500.00</span></div>
+        <div class="key-phrase-box" id="seed-display">Initializing algorithmic keys...</div>
+    </div>
+
+    <div class="section-title">Active Information Contracts</div>
+    
+    <div class="market-feed" id="market-container">
+        <!-- Contracts will render here dynamically -->
+    </div>
+
+    <div class="section-title">Your Active Positions</div>
+    <div id="portfolio-container" class="market-feed">
+        <div class="portfolio-row" style="color: var(--text-muted);">No open information positions.</div>
+    </div>
+</div>
+
+<script>
+    // Initialize Telegram SDK
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+    }
+
+    // Client State Engine
+    let userBalance = 1500.00;
+    let openPositions = {};
+
+    // Generate cryptographic keys automatically without bothering user
+    function initNexusWallet() {
+        const chains = ["NEXUS-MAIN", "SOLANA-V4", "TON-NATIVE", "BASE-L2"];
+        const selectedChain = chains[Math.floor(Math.random() * chains.length)];
+        
+        const phraseArray = ["nexus", "quantum", "oracle", "liquidity", "matrix", "velocity", "protocol", "cyber", "terminal", "algorithm", "yield", "infofi"];
+        const outputPhrase = phraseArray.sort(() => 0.5 - Math.random()).slice(0, 8).join(" ");
+        
+        const hexChars = "0123456789abcdef";
+        let mockAddress = "0x";
+        for (let i = 0; i < 16; i++) mockAddress += hexChars[Math.floor(Math.random() * 16)];
+
+        document.getElementById('seed-display').innerHTML = 
+            `<strong>NETWORK:</strong> ${selectedChain}<br>` +
+            `<strong>ADDRESS:</strong> ${mockAddress}...<br>` +
+            `<strong>PHRASE:</strong> ${outputPhrase}`;
+    }
+
+    // Pre-curated operational data feeds
+    let marketContracts = [
+        { id: "c1", topic: "AI Token Mindshare dominance exceeds 14.5% over 12h interval", category: "TREND", basePrice: 42.50, volatility: 1.8 },
+        { id: "c2", topic: "Sentiment Index score for top 5 structural Layer-1 protocols falls below 65", category: "SENTIMENT", basePrice: 78.10, volatility: 0.9 },
+        { id: "c3", topic: "Velocity of public developer activity updates on core cross-chain repositories doubles", category: "METRIC", basePrice: 22.40, volatility: 2.5 }
+    ];
+
+    function renderMarkets() {
+        const container = document.getElementById('market-container');
+        container.innerHTML = '';
+
+        marketContracts.forEach(contract => {
+            const card = document.createElement('div');
+            card.className = 'contract-card';
+            card.innerHTML = `
+                <div class="contract-header">
+                    <div class="contract-title">${contract.topic}</div>
+                    <div class="contract-tag">${contract.category}</div>
+                </div>
+                <div class="contract-metrics">
+                    <div class="metric-box">
+                        <div class="metric-label">Contract Value</div>
+                        <div class="metric-value" id="price-${contract.id}">$${contract.basePrice.toFixed(2)}</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">AI Consensus</div>
+                        <div class="metric-value" style="color: var(--accent-cyan);" id="odds-${contract.id}">94.2%</div>
+                    </div>
+                </div>
+                <div class="action-container">
+                    <button class="btn-trade btn-long" onclick="executeTrade('${contract.id}', 'LONG')">Buy Long</button>
+                    <button class="btn-trade btn-short" onclick="executeTrade('${contract.id}', 'SHORT')">Buy Short</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // Price Tick Simulation Engine
+    setInterval(() => {
+        marketContracts.forEach(contract => {
+            const delta = (Math.random() * contract.volatility - (contract.volatility / 2)).toFixed(2);
+            contract.basePrice = Math.max(5.00, contract.basePrice + parseFloat(delta));
+            
+            const priceTarget = document.getElementById(`price-${contract.id}`);
+            const oddsTarget = document.getElementById(`odds-${contract.id}`);
+            
+            if (priceTarget) {
+                priceTarget.innerText = `$${contract.basePrice.toFixed(2)}`;
+                priceTarget.style.color = delta >= 0 ? "var(--text-neon)" : "var(--accent-red)";
+            }
+            if (oddsTarget) {
+                const calculatedOdds = Math.min(99.9, Math.max(10.1, (contract.basePrice * 1.3))).toFixed(1);
+                oddsTarget.innerText = `${calculatedOdds}%`;
+            }
+        });
+        updatePortfolioUI();
+    }, 2000);
+
+    function executeTrade(id, direction) {
+        const contract = marketContracts.find(c => c.id === id);
+        if (userBalance >= contract.basePrice) {
+            userBalance -= contract.basePrice;
+            document.getElementById('user-funds').innerText = userBalance.toFixed(2);
+
+            const posKey = `${id}-${direction}`;
+            if (openPositions[posKey]) {
+                openPositions[posKey].units += 1;
+            } else {
+                openPositions[posKey] = {
+                    topic: contract.topic.substring(0, 24) + "...",
+                    direction: direction,
+                    entryPrice: contract.basePrice,
+                    units: 1,
+                    contractRef: contract
+                };
+            }
+            updatePortfolioUI();
+        } else {
+            if(window.Telegram?.WebApp) window.Telegram.WebApp.showAlert("Insufficient network liquidity in wallet balance.");
+        }
+    }
+
+    function updatePortfolioUI() {
+        const container = document.getElementById('portfolio-container');
+        const keys = Object.keys(openPositions);
+        
+        if (keys.length === 0) {
+            container.innerHTML = `<div class="portfolio-row" style="color: var(--text-muted);">No open information positions.</div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+        keys.forEach(key => {
+            const pos = openPositions[key];
+            const currentVal = pos.contractRef.basePrice;
+            let pnl = 0;
+            
+            if (pos.direction === "LONG") {
+                pnl = (currentVal - pos.entryPrice) * pos.units;
+            } else {
+                pnl = (pos.entryPrice - currentVal) * pos.units;
+            }
+
+            const row = document.createElement('div');
+            row.className = 'portfolio-row';
+            row.innerHTML = `
+                <div>${pos.topic} (${pos.direction})</div>
+                <div style="color: ${pnl >= 0 ? 'var(--text-neon)' : 'var(--accent-red)'}">
+                    ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    // Startup
+    window.onload = () => {
+        initNexusWallet();
+        renderMarkets();
+    };
+</script>
+</body>
+</html>
